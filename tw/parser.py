@@ -7,16 +7,15 @@ verbs = {
     'cancel': commands.cancel,
     'modify': commands.modify,
     'travel': commands.travel,
-    'idle': commands.idle    
+    'idle': commands.idle,
 }
 
-def parse(command):
-    world = None
-    player = None
+def parse(command, world=None, player=None):
     tokens = command.lower().split()
     verb = tokens[0]
     
     if verbs.has_key(verb):
-        return verbs[verb](world, player, *tokens[1:])        
+        return verbs[verb](world, player, *tokens[1:])
     else:
+        player.output('bad command dood.\n')
         return 'error'
