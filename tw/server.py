@@ -24,7 +24,7 @@ class Connection(object):
 class Server(object):
     """
     Basic multiplexing TCP server. Assign function to these monkey patched
-    callbacks to allow you app to listen for connect and read events.
+    callbacks to allow your app to listen for connect and read events.
     """
     def on_start(self): pass
     def on_stop(self): pass

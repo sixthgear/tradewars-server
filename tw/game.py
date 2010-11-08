@@ -2,6 +2,7 @@ import collections
 from tornado import ioloop
 import server
 import market
+import parser
 
 Point = collections.namedtuple('Point', 'x y')
 
@@ -39,8 +40,8 @@ class Game(object):
         print 'Server stopped.'
         
     def on_read(self, connection, data): 
-        
-        print '%s: "%s"' % (self.players[connection.fileno()], data.strip())
+        command = data.strip()        
+        print parser.parse(command)
         
     def add_player(self, connection):
         """
