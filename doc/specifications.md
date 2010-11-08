@@ -66,20 +66,25 @@ Every turn, each AI player may perform ONE of the following actions.
 5. Idle
  
 ### Buy Goods ###
- 
+
+Usage: BUY MATERIAL QTYMIN-QTYMAX PRICEPERUNIT
+
 If you are located at a planet that has an open SELL contract for a good you desire, you may buy up to the maximum specified amount for the listed price, provided you have the available credits and cargo space. If you issue an invalid BUY command (the particular good is not available at this location, or you do not have enough credits, or you specify an invalid number) you lose your turn.
  
-    BUY medicine 1300
+    BUY medicine 0-1300 15
  
 ### Sell Goods ###
  
+ 
+Usage: SELL MATERIAL QTYMIN-QTYMAX PRICEPERUNIT
+ 
 If you are located at a planet that has an open BUY contract for a good you possess, you may sell up to the maximum specified amount for the listed price, provided you have the available goods. If you issue an invalid SELL command (the particular good is not requested at this location, or you do not have enough supply, or you specify an invalid number) you lose your turn.
  
-    SELL medicine 1200
+    SELL medicine 0-1200 15cR
         
 ### Travel ###
  
-Begin travel to the specified planet. The travel time will be         represented by a number of whole turns. The formula for travel time will be:
+Begin travel to the specified planet. The travel time will be represented by a number of whole turns. The formula for travel time will be:
  
         dx = target_x - player_x
         dy = target_y - player_y
@@ -89,6 +94,7 @@ Begin travel to the specified planet. The travel time will be         represente
 Example:
 
         TRAVEL hoth
+        
  
 ### Issue Contract ###
  
@@ -107,7 +113,28 @@ If the type of contract is SELL, the player issuing the contract must have enoug
  
 Do nothing for one turn.
  
- 
+
+### Resolving Deadlocks while buying and selling ###
+
+Sometimes two or more players wish to perform the same BUY or SELL action at the same time. When this happens, the deadlocked players will be ranked by the details of their offer, and then then each player in order will be given an opportunity to buy or sell, until the contract has been fulfilled.
+
+#### Price per unit
+
+The better the offered price, the higher priority a player will receive. This means that the highest offered price over list on a SELL contract, or the lowest offered price under list on a BUY contract.
+
+#### Maximum cargo amount
+
+Among players who have offered the same price, players who wish to buy or sell more material will receive precedence. A player who wishes to buy 1000 units of a material will receive his goods before someone who asks for 500.
+
+#### Splitting the contract
+
+Finally, if two or more players have offered the same price, and the same quantity, the rest of the contract will be split equally among the interested parties.
+
+#### Minimum Amount ####
+
+If at any point in the deadlock negotiation process the amount of goods involved for a player drops below the minimum, that player will drop out of contention for the contract. This may be useful to set a volume limit at which a deal is no longer profitable to proceed with. A player who forfeits the contract because of a minimum price will not be allowed to take a different action that turn.
+
+
 3. Market Model
 ---------------
  
@@ -173,13 +200,27 @@ The final set of turn data is a list of player names, their current coordinates,
     mjard, 156, -45, 5633
     islands, 3440, -3000, 6220
     ~
- 
-### 4. Ready ###
+
+### 4. Private Information ###
+    
+    CARGO
+    robotics, 750
+    medicine, 200
+    mutagens, 50
+    ~    
+    LAST SUCCESS 1000
+    ~
+    ERRORS
+    ~
+
+### 5. Ready ###
  
 Finally the server will send a pound # symbol to inform the player that it is ready to receive its next action.
+
+    #
 
 
 5. Server Architecture
 ----------------------
 
-TODO
+    TODO
