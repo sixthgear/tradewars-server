@@ -14,8 +14,13 @@ class Market(object):
         self.prices = {}
         self.supply = {}
         self.production = {}
-        self.materials = list(commerce.material_names)[:5]
-
+        self.materials = list(commerce.material_names)[:5]        
+        self.id_gen = itertools.count()
+    
+    @property
+    def credits(self):
+        return sum([p.credits for p in self.world.planets])
+            
     def randomize(self):
         """
         Build inital market conditions for the passed world object
@@ -62,6 +67,7 @@ class Market(object):
         sellers = [s for s in self.contracts if s.type == commerce.SELL]
         
         pending_deals = []
+        self.completed_deals = []
         
         for b, s in itertools.product(buyers, sellers):            
             if b.planet == s.planet: continue
@@ -69,8 +75,12 @@ class Market(object):
             if b.price < s.price: continue            
             pending_deals.append((b,s))
         
+        # shuffle so that the first few planets dont steal all the deals
+        random.shuffle(pending_deals)
+        
         for b,s in pending_deals:
             amount = min(b.amount, s.amount)
+            price = (b.price * amount)
             m = b.material
             
             if not amount: continue
@@ -79,20 +89,18 @@ class Market(object):
             s.amount -= amount
             b.planet.supply[m] += amount
             s.planet.supply[m] -= amount
+            b.planet.credits -= price
+            s.planet.credits += price
             
             if b.amount == 0:
                 self.contracts.remove(b)
             if s.amount == 0:
                 self.contracts.remove(s)                
             
-            print '%s buys %d %s from %s' % (
-                b.planet.name,
-                amount,
-                b.material,
-                s.planet.name)
+            self.completed_deals.append((b,s, amount, price))
+            
         
-
-        # CONTACT GENERATION
+        # CONTRACT GENERATION
         # loop through every possible planet-material combination
         for p,m in itertools.product(self.world.planets, self.materials):
 
@@ -106,15 +114,21 @@ class Market(object):
             # new contracts
             if production < 0:
                 turns_left = supply / -production
+                # buy when the current supply will run out in 5 turns
                 if turns_left > 5: continue                
                 type = commerce.BUY
+                # buy enough, ideally to last for another 20 turns
                 amount = -production * 20 - supply
-                price = min(100, 10 * (6-turns_left))
+                # set a price based on how close we are to running out
+                price = min(50, 5 * (6-turns_left))
             elif production > 0:    
                 type = commerce.SELL
+                # only sell if we have more than 2000 units
                 if supply < 2000: continue
+                # sell as much as possible, in 500 unit increments
                 amount = (supply / 500) * 500
-                price = max(10, 10 * (10 - (supply-2000)/production))                
+                # start price naively at 50, and count down in fives
+                price = max(5, 5 * (10 - (supply-2000)/production))                
             else:
                 continue
 
@@ -132,10 +146,13 @@ class Market(object):
                 existing[0].price = price
                 existing[0].amount = amount
             
-                
+            
     def issue(self, type, planet, material, amount, price):
+        """
+        Issue a contract
+        """
         c = commerce.Contract()
-        c.id = len(self.contracts)
+        c.id = self.id_gen.next()
         c.planet = planet
         c.type = type
         c.material = material        
@@ -145,29 +162,49 @@ class Market(object):
         
                                 
     def output(self):
-        print 'MARKET'
+        print 'DEALS'
+        for b,s,amount,price in self.completed_deals:
+            print '%s buys %d %s from %s for %dcR' % (
+                b.planet.name,
+                amount,
+                b.material,
+                s.planet.name,
+                price)
+        print '~'
+        mn = 'MARKET (%dcR)' % self.credits
+        print \
+            mn.ljust(18) + \
+            str(sum(self.production.values())).rjust(5) + \
+            str(sum(self.supply.values())).rjust(7)
+        print '-' * 30
         for m in self.materials:
             print '    %s %s %s' % (
                 m.ljust(12), 
                 str(self.production[m]).rjust(6), 
                 str(self.supply[m]).rjust(6))
-        print \
-            str(sum(self.production.values())).rjust(23) + \
-            str(sum(self.supply.values())).rjust(7)
         print '~'        
-        print 'PLANETS'        
+        print 'PLANETS'
         for p in self.world.planets:
-            print p.name
+            pn = '%s (%dcR)' % (p.name, p.credits)
+            print \
+                pn.ljust(16) + \
+                str(sum(p.production.values())).rjust(7) + \
+                str(sum(p.supply.values())).rjust(7)
+            print '-' * 30
             for m in self.materials:
                 print '    %s %s %s' % (
                     m.ljust(12), 
                     str(p.production[m]).rjust(6), 
                     str(p.supply[m]).rjust(6))
+            print
+            
         print '~'
         print 'CONTRACTS'
         for c in self.contracts:
             print c
         print '~'
+
+            
             
             
         
@@ -187,6 +224,7 @@ if __name__ == '__main__':
                 random.randrange(-10000, 10000), 
                 random.randrange(-10000, 10000)
             )
+        p.credits = 100000
         w.planets.append(p)
         print p
     print '~'
