@@ -22,6 +22,7 @@ class Game(object):
         self.players = {}
         self.world = world.World()
         self.server = None
+        self.timer = None
         self.warden = warden.Warden()
                    
     def run(self, port=4000):
@@ -56,11 +57,14 @@ class Game(object):
             self.open_pregame()
             
     def open_pregame(self):
+        assert self.state in (LAUNCHING, WAITING, POSTGAME)
         self.state = PREGAME
         print 'PREGAME: Allowing connections, game begins in %d seconds' % self.pregame_delay
-        self.timer = ioloop.IOLoop.instance().add_timeout(time.time() + self.pregame_delay, self.start_game)
+        self.timer = None
+        ioloop.IOLoop.instance().add_timeout(time.time() + self.pregame_delay, self.start_game)
         
     def start_game(self):
+        assert self.state in (PREGAME,)
         print 'BUILDING: creating game world and market'
         self.state = BUILDING
         # generate planets
@@ -73,7 +77,8 @@ class Game(object):
     
     def shutdown(self):
         print 'Shutting down...'
-        self.timer.stop()
+        if self.timer: 
+            self.timer.stop()
         self.server.stop()
         ioloop.IOLoop.instance().stop()        
                 
