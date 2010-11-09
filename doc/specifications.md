@@ -43,7 +43,7 @@ A number of materials will be created on the planets in the universe. The intern
  
 A contract is a request to buy or sell a particular amount of a particular good at a particular price at a certain location (whew). Issuing and completing contracts is the basis for all trading that occurs in the game. Contracts may be issued on any turn by either the internal market model, or by the players themselves. At the start of every turn, players will be informed of all the currently open contracts on the market.
  
-Once a contract is first issued, it will remain on the market until it is completed. The contract price may be modified on any turn by the player who issued it. SELL contracts may only be made cheaper, and BUY contracts may only be made more expensive.
+Once a contract is first issued, it will remain on the market until it is completed or canceled. The contract price may be modified on any turn by the player who issued it. SELL contracts may only be made cheaper, and BUY contracts may only be made more expensive.
  
 Players who wish to issue contracts (in order to conduct business with other players) must first travel to any planet. From there they may issue a contract to buy or sell a given material for a given price to a given maximum number of units. The player must pay the entire price of the contract up-front (in materials for a SELL contract, or credits for a BUY contract) and leave them at the planet.
  
@@ -51,9 +51,9 @@ This contract will enter the market on the next turn, and all players in the gam
  
 When the contract is completed in whole or in part (by another player performing a BUY or SELL action), the credits will exchange hands immediately. Any materials that are received by the planet as part of a player-issued BUY contract will remain at the planet until the buying player travels there and picks them up. 
  
-Materials and credits from an expired contract will be returned to the original player, although in the case of materials left as part of an expired SELL contract, the player will need to travel back to the original planet to pick them up.
+80% of the materials or credits from a cancelled contract will be returned to the original player, although in the case of materials left as part of an cancelled SELL contract, the player will need to travel back to the original planet to pick them up. 
  
-Players may renew expiring contracts from anywhere in the universe.
+Players may cancel or modify the price of a contract from any planet in the game.
         
 ### Player Actions ###
         
@@ -63,7 +63,9 @@ Every turn, each AI player may perform ONE of the following actions.
 2. Sell goods
 3. Travel
 4. Issue contract
-5. Idle
+5. Cancel contract
+6. Modify contract
+7. Idle
  
 ### Buy Goods ###
 
@@ -80,7 +82,7 @@ Usage: SELL MATERIAL QTYMIN-QTYMAX PRICEPERUNIT
  
 If you are located at a planet that has an open BUY contract for a good you possess, you may sell up to the maximum specified amount for the listed price, provided you have the available goods. If you issue an invalid SELL command (the particular good is not requested at this location, or you do not have enough supply, or you specify an invalid number) you lose your turn.
  
-    SELL medicine 0-1200 15cR
+    SELL medicine 0-1200 15
         
 ### Travel ###
  
@@ -106,7 +108,36 @@ This command will issue a contract at the players current location. The required
 If the type of contract is BUY, the player issuing the contract must have enough credits to cover the transaction. These credits will be taken from that player and held in escrow at the planet until the contract is completed, whereupon they will be immediately transferred to the selling players account. The goods will remain at the planet until the buying player can return to the planet and pick them up.
  
 If the type of contract is SELL, the player issuing the contract must have enough material to cover the transaction. These materials will be taken from that player and held in escrow at the planet until the contract is completed, whereupon they will be immediately transferred to the buying players cargo hold.
- 
+
+### Cancel Contract ###
+
+This command will take a open contract that was issued by the player off the market. 
+
+For a BUY contract, the credits paid will be returned immediately to the player, minus 20%. 
+
+For a SELL contract the materials, minus 20% may be reclaimed at the planet when the player
+next visits.
+
+This command may be used while located at any planet, even if it is not the one where
+the player issued the contract.
+
+    CANCEL 1
+
+### Modify Contract ###
+
+This command will modify the price of an open contract that was issued by the player. 
+
+For a BUY contract, the player may increase the price. The funds will be transferred to
+the escrow immediately.
+
+For a SELL contract, the player may decrease the price, but not the quantity.
+
+This command may be used while located at any planet, even if it is not the one where
+the player issued the contract.
+
+    MODIFY 1 67
+    
+
 ### Idle ###
  
     IDLE
@@ -138,7 +169,7 @@ If at any point in the deadlock negotiation process the amount of goods involved
 3. Market Model
 ---------------
  
-Wibbley-wobbley, supply and demandey stuff.
+See market-draft.md for now -- will be moved here when finalized.
  
 4. Protocol
 ------------
@@ -180,6 +211,9 @@ A single line of information with the word “TURN” followed by a space and an
  
 ### 2. List of open contracts ###
  
+TODO: we may turn this into a delta list of contracts to prevent griefers lagging the 
+system by creating many small contracts
+ 
 The next set of data is a list of all open contracts on the market. This list will take the form of series of comma-separated values. The fields are: id, planet-name, type, material, credits-per-unit, quantity, turns-remaining. The list will be terminated by a line containing a single tilde ~ character.
  
     CONTRACTS
@@ -215,7 +249,7 @@ The final set of turn data is a list of player names, their current coordinates,
 
 ### 5. Ready ###
  
-Finally the server will send a pound # symbol to inform the player that it is ready to receive its next action.
+Finally the server will send a pound # symbol, or a percent % symbol to inform the player that it is ready to receive its next action. A pound symbol means the game is expecting a response from the player within 1500ms. The % symbol means that the player has lost this turn and may not make an action.
 
     #
 
