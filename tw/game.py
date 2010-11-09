@@ -1,6 +1,7 @@
 import time
 import datetime
 from tornado import ioloop
+
 import server
 import market
 import parser
@@ -16,7 +17,8 @@ class Game(object):
     
     def __init__(self):
         self.state = LAUNCHING
-        self.next_game_time = datetime.datetime.now() + datetime.timedelta(seconds=10)
+        self.next_game_time = datetime.datetime.now() \
+            + datetime.timedelta(seconds=10)
         self.pregame_delay = 10
         self.tick = 0
         self.players = {}
@@ -45,11 +47,10 @@ class Game(object):
         or get going ASAP.
         """
         print 'TW is ready to rock on port %d.' % self.server.port
-        
         if datetime.datetime.now() > self.next_game_time:
             self.open_pregame()
         else:
-            print 'WAITING: NEXT GAME at %s. Serving notices until then.' % self.next_game_time
+            print 'WAITING: NEXT GAME at %s.' % self.next_game_time
             self.timer = ioloop.PeriodicCallback(self.waiting_update, 1000)
             self.timer.start()        
             self.state = WAITING        
@@ -60,20 +61,23 @@ class Game(object):
         and is used solely to determine if it is time to start allowing
         connections for the next game.
         """
-        if self.state == WAITING and datetime.datetime.now() > self.next_game_time:
-            self.open_pregame()
+        if self.state == WAITING:
+            if datetime.datetime.now() > self.next_game_time:
+                self.open_pregame()
             
     def open_pregame(self):
         """
-        So gametime is here, let's allow connections, in preparation for the game.
-        This is to allow every bot that wants to play a chance to get here before
-        the ticks start rolling.
+        So gametime is here, let's allow connections, in preparation for the 
+        game. This is to allow every bot that wants to play a chance to get here 
+        before the ticks start rolling.
         """
         assert self.state in (LAUNCHING, WAITING, POSTGAME)
         self.state = PREGAME
-        print 'PREGAME: Allowing connections, game begins in %d seconds' % self.pregame_delay
+        print 'PREGAME: Allowing connections, game begins in %d seconds' \
+            % self.pregame_delay
         self.timer = None
-        ioloop.IOLoop.instance().add_timeout(time.time() + self.pregame_delay, self.start_game)
+        ioloop.IOLoop.instance().add_timeout(time.time() \
+            + self.pregame_delay, self.start_game)
         
     def start_game(self):
         """
@@ -106,7 +110,8 @@ class Game(object):
                 
     def on_read(self, connection, data): 
         """
-        Client sends us something. Let's stick it in the command queue to examine later.
+        Client sends us something. Let's stick it in the command queue to 
+        examine later.
         """
         command = data.strip()        
         self.players[connection.fileno()].command_queue.append(command)
@@ -137,8 +142,8 @@ class Game(object):
         
         for fileno, p in self.players.items():            
             if len(p.command_queue) > 1:
-                print 'Error for %s: more than one command received for this turn.' % p
-                p.output('Error: more than one command received for this turn. \n')
+                print 'Error for %s: more than one command for this turn.' % p
+                p.output('Error: more than one command for this turn. \n')
                 p.command_queue = []
                 continue                
             elif p.command_queue:                

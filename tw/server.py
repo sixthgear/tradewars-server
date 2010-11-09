@@ -69,7 +69,10 @@ class Server(object):
         """
         assert not self._started
         self._started = True            
-        self.io_loop.add_handler(self._socket.fileno(), self.handle_connect, ioloop.IOLoop.READ)
+        self.io_loop.add_handler(
+            self._socket.fileno(),
+            self.handle_connect,
+            ioloop.IOLoop.READ)
         self.on_start()
         
     def stop(self):

@@ -88,14 +88,14 @@ If you are located at a planet that has an open BUY contract for a good you poss
  
 Begin travel to the specified planet. The travel time will be represented by a number of whole turns. The formula for travel time will be:
  
-        dx = target_x - player_x
-        dy = target_y - player_y
-        distance = sqrt(dx² + dy²)
-        turns = ceil(distance / 1000)
+    dx = target_x - player_x
+    dy = target_y - player_y
+    distance = sqrt(dx² + dy²)
+    turns = ceil(distance / 1000)
 
 Example:
 
-        TRAVEL hoth
+    TRAVEL hoth
         
  
 ### Issue Contract ###
