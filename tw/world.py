@@ -40,7 +40,7 @@ class Player(object):
     """
     """
     def __init__(self, connection=None):
-        self._connection = connection
+        self._connection = connection        
         self.name = 'Player'
         self.position = Point(0, 0)
         self.credits = 1000

@@ -10,6 +10,11 @@ import warden
 
 LAUNCHING, WAITING, PREGAME, BUILDING, PLAYING, POSTGAME = range(6)
 
+AUTH_TABLE = {
+    '817afbce825f5a215da3a7f52980df1a': 'sixthgear',
+    'f795b3760a087ad8b7c9e1d57e9f1751': 'mjard',
+}
+
 class Game(object):
     """
     Main Game controller object.
@@ -18,8 +23,8 @@ class Game(object):
     def __init__(self):
         self.state = LAUNCHING
         self.next_game_time = datetime.datetime.now() \
-            + datetime.timedelta(seconds=10)
-        self.pregame_delay = 10
+            + datetime.timedelta(seconds=5)
+        self.pregame_delay = 5
         self.tick = 0
         self.players = {}
         self.world = world.World()
@@ -35,6 +40,7 @@ class Game(object):
         self.server = server.Server(port)
         # hacky-hack event listeners
         self.server.on_new_connection = self.on_connect
+        self.on_dropped_connection = self.on_disconnect
         self.server.on_start = self.on_start
         self.server.on_stop = self.on_stop
         self.server.on_read = self.on_read
@@ -107,30 +113,51 @@ class Game(object):
     def on_stop(self): 
         print 'Server stopped.'
         
-                
-    def on_read(self, connection, data): 
-        """
-        Client sends us something. Let's stick it in the command queue to 
-        examine later.
-        """
-        command = data.strip()        
-        self.players[connection.fileno()].command_queue.append(command)
-        
     def on_connect(self, connection):
         """
         Called whenever the server has a new connection.
         """        
-        print '%s has connected.' % connection.address[0]
+        print 'new connection from %s.' % connection.address[0]
         # report this connection to warden
-        self.warden.report_connection()        
+        self.warden.report_connection()
         if self.state == WAITING:
             connection.send('NEXT GAME AT %s\n' % self.next_game_time)
             connection.disconnect()            
-        if self.state in (PREGAME, BUILDING, PLAYING):
-            p = world.Player(connection)
-            p.name = 'Player %d' % connection.fileno()
-            self.players[connection.fileno()] = p
-                                
+        if self.state in (PREGAME, BUILDING, PLAYING):            
+            connection.state = server.AUTH
+            connection.send('AUTH\n')
+    
+    def authenticate(self, connection, token):
+        """
+        """
+        if AUTH_TABLE.has_key(token):
+            player = world.Player(connection)
+            player.name = AUTH_TABLE[token]
+            connection.state = server.AUTHENTICATED
+            print '%s has joined the game.' % player.name
+            connection.send('WELCOME %s\n' % player.name)
+            self.players[connection.fileno()] = player
+        else:
+            print '%s: INVALID TOKEN: %s' % (connection.fileno(), token)
+            connection.send('INVALID TOKEN\n')
+            connection.disconnect()
+            
+    def on_disconnect(self, connection):
+        if self.players.has_key(connection.fileno()):
+            print '%s has disconnected.' % player.name 
+        
+    def on_read(self, connection, data): 
+        """
+        Client sent us something. Let's stick it in the command queue to 
+        examine later.
+        """        
+        command = data.strip()
+        if connection.state == server.AUTH:
+            self.authenticate(connection, command)
+        elif connection.state == server.AUTHENTICATED:
+            player = self.players[connection.fileno()]
+            player.command_queue.append(command)
+                                    
     def update(self):
         """
         Called every 1500ms.

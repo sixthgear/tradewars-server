@@ -1,7 +1,10 @@
-from tornado import ioloop
 import socket
 import fcntl
 import errno
+
+from tornado import ioloop
+
+CONNECTING, AUTH, AUTHENTICATED = range(3)
 
 class Connection(object):
     """
@@ -16,7 +19,8 @@ class Connection(object):
     def fileno(self):
         return self.socket.fileno()
         
-    def __init__(self, socket, address):        
+    def __init__(self, socket, address):
+        self.state = CONNECTING
         self.socket = socket
         self.address = address
     
@@ -126,4 +130,5 @@ class Server(object):
         Send data to all connections
         """
         for fd, c in self._connections.iteritems():
-            nbytes = c.socket.send(data)
+            if c.state == AUTHENTICATED:
+                nbytes = c.socket.send(data)
