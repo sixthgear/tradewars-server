@@ -42,7 +42,7 @@ class Market(object):
             # become a consumer. We add a small bias to the positive side
             # so that economy is slightly inflationary in general.
             
-            a.production[m] = a.production.get(m,0) + production_delta + 1
+            a.production[m] = a.production.get(m,0) + production_delta
             b.production[m] = b.production.get(m,0) - production_delta
             a.supply[m] = a.supply.get(m,0) + supply_delta
             b.supply[m] = b.supply.get(m,0) - supply_delta
@@ -55,6 +55,44 @@ class Market(object):
                 
     def update(self):        
         
+        # BUY AND SELL
+        # to be replaced with players
+        
+        buyers = [b for b in self.contracts if b.type == commerce.BUY]
+        sellers = [s for s in self.contracts if s.type == commerce.SELL]
+        
+        pending_deals = []
+        
+        for b, s in itertools.product(buyers, sellers):            
+            if b.planet == s.planet: continue
+            if b.material != s.material: continue
+            if b.price < s.price: continue            
+            pending_deals.append((b,s))
+        
+        for b,s in pending_deals:
+            amount = min(b.amount, s.amount)
+            m = b.material
+            
+            if not amount: continue
+            
+            b.amount -= amount
+            s.amount -= amount
+            b.planet.supply[m] += amount
+            s.planet.supply[m] -= amount
+            
+            if b.amount == 0:
+                self.contracts.remove(b)
+            if s.amount == 0:
+                self.contracts.remove(s)                
+            
+            print '%s buys %d %s from %s' % (
+                b.planet.name,
+                amount,
+                b.material,
+                s.planet.name)
+        
+
+        # CONTACT GENERATION
         # loop through every possible planet-material combination
         for p,m in itertools.product(self.world.planets, self.materials):
 
@@ -64,51 +102,36 @@ class Market(object):
             # modify local supply based on production rate
             p.supply[m] = max(0, supply + production)
             self.supply[m] = max(0, self.supply[m] + production)
-            
+                        
+            # new contracts
             if production < 0:
-                
                 turns_left = supply / -production
-                amount_for_20 = -production * 20
-                price = 10 * (6-turns_left)
-                
-                if turns_left > 5: continue
-                
-                # find existing contracts
-                existing = [x for x in self.contracts if 
-                    x.material == m and 
-                    x.planet == p and
-                    x.owner == None and
-                    x.type == commerce.BUY
-                ]
-                                         
-                if not existing:
-                    self.issue(commerce.BUY, p, m, amount_for_20, price)
-                else:
-                    existing[0].price = price
-                    existing[0].amount = amount_for_20
-                    
+                if turns_left > 5: continue                
+                type = commerce.BUY
+                amount = -production * 20 - supply
+                price = min(100, 10 * (6-turns_left))
             elif production > 0:    
-                
-                if supply < 2000: continue                
-                price = 10 * (1 + (supply-2000)/production)
+                type = commerce.SELL
+                if supply < 2000: continue
                 amount = (supply / 500) * 500
-                    
-                # find existing contracts
-                existing = [x for x in self.contracts if 
-                    x.material == m and 
-                    x.planet == p and
-                    x.owner == None and
-                    x.type == commerce.SELL
-                ]
-                                        
-                if not existing:                    
-                    self.issue(commerce.SELL, p, m, amount, price)                
-                else:
-                    existing[0].price = price
-                    existing[0].amount = amount
-                    
+                price = max(10, 10 * (10 - (supply-2000)/production))                
             else:
-                pass
+                continue
+
+            # find existing contracts
+            existing = [x for x in self.contracts if 
+                x.material == m and 
+                x.planet == p and
+                x.owner == None and
+                x.type == type
+            ]
+
+            if not existing:
+                self.issue(type, p, m, amount, price)
+            else:
+                existing[0].price = price
+                existing[0].amount = amount
+            
                 
     def issue(self, type, planet, material, amount, price):
         c = commerce.Contract()
