@@ -71,10 +71,14 @@ Each Turn
 3.  Check for contract conditions. Create contracts if required.
 
     If local supply is lower than threshold rmin, and the planet has a non-positive 
-    production rate, the planet has a chance of creating a BUY contract this turn. 
+    production rate, the planet has a chance of creating a BUY contract this turn if one 
+    does not already exist. If one exists, there is a chance of increasing the price
+    of that contract.
     
     If local supply is greater than threshold rmax and the planet has a non-negative
-    production rate the planet has a chance of creating a SELL contract this turn.
+    production rate the planet has a chance of creating a SELL contract this turn if one 
+    does not already exist. If one exists, there is a chance of reducing the price
+    of that contract.
     
     The price for this contract is created using the following factors:
     

@@ -43,7 +43,7 @@ A number of materials will be created on the planets in the universe. The intern
  
 A contract is a request to buy or sell a particular amount of a particular good at a particular price at a certain location (whew). Issuing and completing contracts is the basis for all trading that occurs in the game. Contracts may be issued on any turn by either the internal market model, or by the players themselves. At the start of every turn, players will be informed of all the currently open contracts on the market.
  
-Once a contract is first issued, it will remain on the market until it is completed or canceled. The contract price may be modified on any turn by the player who issued it. SELL contracts may only be made cheaper, and BUY contracts may only be made more expensive.
+Once a contract is first issued, it will remain on the market until it is completed or canceled. The contract price may be modified on any turn by the player who issued it, as long as that player is located at any planet. SELL contracts may only be made cheaper, and BUY contracts may only be made more expensive.
  
 Players who wish to issue contracts (in order to conduct business with other players) must first travel to any planet. From there they may issue a contract to buy or sell a given material for a given price to a given maximum number of units. The player must pay the entire price of the contract up-front (in materials for a SELL contract, or credits for a BUY contract) and leave them at the planet.
  
@@ -145,7 +145,7 @@ the player issued the contract.
 Do nothing for one turn.
  
 
-### Resolving Deadlocks while buying and selling ###
+### Deadlocks negotiations ###
 
 Sometimes two or more players wish to perform the same BUY or SELL action at the same time. When this happens, the deadlocked players will be ranked by the details of their offer, and then then each player in order will be given an opportunity to buy or sell, until the contract has been fulfilled.
 

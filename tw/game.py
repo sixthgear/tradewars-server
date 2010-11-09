@@ -146,6 +146,7 @@ class Game(object):
                 print parser.parse(command, self.world, p)
                 
         # 3. update game state
+        # DETECT DEADLOCKS!
         #        
         # 4. simulate market
         #        
