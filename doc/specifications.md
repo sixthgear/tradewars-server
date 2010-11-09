@@ -115,11 +115,9 @@ This command will take a open contract that was issued by the player off the mar
 
 For a BUY contract, the credits paid will be returned immediately to the player, minus 20%. 
 
-For a SELL contract the materials, minus 20% may be reclaimed at the planet when the player
-next visits.
+For a SELL contract the materials, minus 20% may be reclaimed at the planet when the player next visits.
 
-This command may be used while located at any planet, even if it is not the one where
-the player issued the contract.
+This command may be used while located at any planet, even if it is not the one where the player issued the contract.
 
     CANCEL 1
 
@@ -127,13 +125,11 @@ the player issued the contract.
 
 This command will modify the price of an open contract that was issued by the player. 
 
-For a BUY contract, the player may increase the price. The funds will be transferred to
-the escrow immediately.
+For a BUY contract, the player may increase the price. The funds will be transferred to the escrow immediately.
 
 For a SELL contract, the player may decrease the price, but not the quantity.
 
-This command may be used while located at any planet, even if it is not the one where
-the player issued the contract.
+This command may be used while located at any planet, even if it is not the one where the player issued the contract.
 
     MODIFY 1 67
     
@@ -211,8 +207,7 @@ A single line of information with the word “TURN” followed by a space and an
  
 ### 2. List of open contracts ###
  
-TODO: we may turn this into a delta list of contracts to prevent griefers lagging the 
-system by creating many small contracts
+TODO: we may turn this into a delta list of contracts to prevent griefers lagging the system by creating many small contracts
  
 The next set of data is a list of all open contracts on the market. This list will take the form of series of comma-separated values. The fields are: id, planet-name, type, material, credits-per-unit, quantity, turns-remaining. The list will be terminated by a line containing a single tilde ~ character.
  

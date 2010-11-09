@@ -92,7 +92,10 @@ class Server(object):
             socket, address = self._socket.accept()
             c = Connection(socket, address)
             self._connections[c.fileno()] = c
-            self.io_loop.add_handler(c.fileno(), self.handle_read, ioloop.IOLoop.READ)            
+            self.io_loop.add_handler(
+                c.fileno(), 
+                self.handle_read, 
+                ioloop.IOLoop.READ)
                         
         except socket.error, e:
             if e.args[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):

@@ -138,8 +138,7 @@ class Game(object):
         self.tick += 1
         
         # 1. read connections
-        # 2. parse commands
-        
+        # 2. parse commands        
         for fileno, p in self.players.items():            
             if len(p.command_queue) > 1:
                 print 'Error for %s: more than one command for this turn.' % p
