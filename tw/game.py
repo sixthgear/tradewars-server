@@ -194,12 +194,12 @@ class Game(object):
             elif p.command_queue:                
                 command = p.command_queue.pop(0)
                 print parser.parse(command, self.world, p)
-                
+        
         # 3. update game state
         # DETECT DEADLOCKS!
-
+        
         # 4. simulate market
-
+        
         # 5. write to connections
         # write common output
         
@@ -209,6 +209,6 @@ class Game(object):
         # write individual output
         for p in self.players.values():
             p.flush()
-            
+        
         # send ready command
         self.server.sendall('#\n')

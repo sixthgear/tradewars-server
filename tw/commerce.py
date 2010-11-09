@@ -27,3 +27,17 @@ class Contract(object):
         self.material = ''
         self.amount = 0
         self.price = 0
+
+    def __repr__(self):
+        r = (
+            self.id, 
+            self.planet.name, 
+            'SELL' if self.type else 'BUY', 
+            self.material, 
+            self.amount, 
+            self.price
+        )
+        
+        return '%d %s %s %s %d %dcR' % r
+
+        

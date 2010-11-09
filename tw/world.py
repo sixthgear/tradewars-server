@@ -31,9 +31,12 @@ class Planet(object):
         self.position = Point(0, 0)
         self.credits = 0
         self.supply = {}
-        self.production = {}
-        self.consumption = {}
+        self.production = {}    
         self.contracts = []
+        
+    def __repr__(self):
+        r = (self.name, str(self.position.x), str(self.position.y))
+        return str.join(',', r)
         
 class Player(object):
     """
