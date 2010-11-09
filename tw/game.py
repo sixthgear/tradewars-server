@@ -11,8 +11,8 @@ import warden
 LAUNCHING, WAITING, PREGAME, BUILDING, PLAYING, POSTGAME = range(6)
 
 AUTH_TABLE = {
-    '817afbce825f5a215da3a7f52980df1a': 'sixthgear',
-    'f795b3760a087ad8b7c9e1d57e9f1751': 'mjard',
+    'sixthgear': 'sixthgear',
+    'mjard': 'mjard',
 }
 
 class Game(object):
@@ -40,7 +40,7 @@ class Game(object):
         self.server = server.Server(port)
         # hacky-hack event listeners
         self.server.on_new_connection = self.on_connect
-        self.on_dropped_connection = self.on_disconnect
+        self.server.on_dropped_connection = self.on_disconnect
         self.server.on_start = self.on_start
         self.server.on_stop = self.on_stop
         self.server.on_read = self.on_read
@@ -131,20 +131,38 @@ class Game(object):
         """
         """
         if AUTH_TABLE.has_key(token):
-            player = world.Player(connection)
-            player.name = AUTH_TABLE[token]
-            connection.state = server.AUTHENTICATED
-            print '%s has joined the game.' % player.name
-            connection.send('WELCOME %s\n' % player.name)
-            self.players[connection.fileno()] = player
+            username = AUTH_TABLE[token]
+            plist = filter(lambda x: x[1].name == username, \
+                self.players.items())
+            if not plist:
+                player = world.Player(connection)
+                player.name = username
+                self.players[connection.fileno] = player
+                print '%s has joined the game.' % player.name
+            else:
+                fileno, player = plist[0]
+                self.players[fileno].disconnect()
+                del self.players[fileno]
+                
+                self.players[connection.fileno] = player
+                self.players[connection.fileno].connection = connection
+                
+                print '%s has rejoined the game.' % player.name
+            
+            connection.state = server.AUTHENTICATED            
+            connection.send('WELCOME %s\n' % player.name)            
         else:
-            print '%s: INVALID TOKEN: %s' % (connection.fileno(), token)
+            print '%s: INVALID TOKEN: %s' % (connection.fileno, token)
             connection.send('INVALID TOKEN\n')
             connection.disconnect()
             
     def on_disconnect(self, connection):
-        if self.players.has_key(connection.fileno()):
-            print '%s has disconnected.' % player.name 
+        if self.players.has_key(connection.fileno):
+            self.players[connection.fileno].disconnect()
+            print '%s has disconnected.' \
+                % self.players[connection.fileno].name
+            # del self.players[connection.fileno]
+            
         
     def on_read(self, connection, data): 
         """
@@ -155,7 +173,7 @@ class Game(object):
         if connection.state == server.AUTH:
             self.authenticate(connection, command)
         elif connection.state == server.AUTHENTICATED:
-            player = self.players[connection.fileno()]
+            player = self.players[connection.fileno]
             player.command_queue.append(command)
                                     
     def update(self):
@@ -165,7 +183,8 @@ class Game(object):
         self.tick += 1
         
         # 1. read connections
-        # 2. parse commands        
+        # 2. parse commands
+        
         for fileno, p in self.players.items():            
             if len(p.command_queue) > 1:
                 print 'Error for %s: more than one command for this turn.' % p
@@ -178,16 +197,17 @@ class Game(object):
                 
         # 3. update game state
         # DETECT DEADLOCKS!
-        #        
+
         # 4. simulate market
-        #        
+
         # 5. write to connections
         # write common output
+        
         print 'sending tick %d...' % self.tick
         self.server.sendall('TURN %d\n' % self.tick)
         
         # write individual output
-        for fileno,p in self.players.items():
+        for p in self.players.values():
             p.flush()
             
         # send ready command

@@ -18,9 +18,8 @@ planet_names = set((
 def name_generator():
     for name in planet_names:
         yield name
-
+        
 ng = name_generator()
-
 
 class World(object):
     def __init__(self):
@@ -49,14 +48,20 @@ class Player(object):
         self.contracts = []
         self.command_queue = []
         self.output_queue = []
-        
-    def output(self, data):
-        self.output_queue.append(data)
+    
+    def disconnect(self):
+        self._connection.disconnect
+        self._connection = None
+    
+    def output(self, data):        
+        if self._connection:
+            self.output_queue.append(data)
     
     def flush(self):
         while self.output_queue:
             data = self.output_queue.pop(0)
-            self._connection.send(data)
+            if self._connection:
+                self._connection.send(data)
                 
     def __repr__(self):
         return self.name

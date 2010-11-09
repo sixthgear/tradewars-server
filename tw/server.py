@@ -10,20 +10,21 @@ class Connection(object):
     """
     Connection object.
     """
-    def on_connect(self): pass
-    def on_close(self): pass
-    def on_write(self, data): pass
-    def on_read(self): pass
-    def on_server_stop(self): pass
-    
-    def fileno(self):
-        return self.socket.fileno()
-        
     def __init__(self, socket, address):
         self.state = CONNECTING
         self.socket = socket
         self.address = address
+        self.fileno = socket.fileno()
+
+    # def on_connect(self): pass
+    # def on_close(self): pass
+    # def on_write(self, data): pass
+    # def on_read(self): pass
+    # def on_server_stop(self): pass
     
+    # def fileno(self):
+    #     return self.socket.fileno()
+            
     def send(self, data):
         self.socket.send(data)
         
@@ -43,16 +44,14 @@ class Server(object):
     def on_dropped_connection(self, connection): pass
         
     def __init__(self, port, address="", io_loop=None):
-    
+            
         self.io_loop = io_loop or ioloop.IOLoop.instance()
         self._socket = None        
         self._started = False
         self._connections = {}
-        self.bind(port, address="")
-        self.port = port
-        self.address = address
+        self.bind(port, address='')
         
-    def bind(self, port, address=""):
+    def bind(self, port, address=''):
         """
         Bind the server to listen on a specified port.
         """
@@ -66,6 +65,8 @@ class Server(object):
         self._socket.setblocking(0)
         self._socket.bind((address, port))
         self._socket.listen(128)
+        self.port = port
+        self.address = address
             
     def start(self):
         """
@@ -95,40 +96,44 @@ class Server(object):
         try:
             socket, address = self._socket.accept()
             c = Connection(socket, address)
-            self._connections[c.fileno()] = c
+            self._connections[c.fileno] = c
             self.io_loop.add_handler(
-                c.fileno(), 
+                c.fileno, 
                 self.handle_read, 
-                ioloop.IOLoop.READ)
-                        
+                ioloop.IOLoop.READ)                        
         except socket.error, e:
             if e.args[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
                 raise
-        
+            
         self.on_new_connection(c)
 
     def handle_read(self, fd, events):
         """
         Data recieved from client
         """
-        c = self._connections[fd]
-                
+        c = self._connections[fd]                
         data = c.socket.recv(1024)
-
-        if data:            
+        if len(data) > 0:            
             self.on_read(c, data)
         else:
             # closed connection
+            self.on_dropped_connection(c)
             c.socket.close()
             del self._connections[fd]
             self.io_loop.remove_handler(fd)
-            self.on_dropped_connection(c)
-
-
+            
     def sendall(self, data):
         """
         Send data to all connections
         """
-        for fd, c in self._connections.iteritems():
+        for fd, c in self._connections.items():
             if c.state == AUTHENTICATED:
                 nbytes = c.socket.send(data)
+    
+    def disconnect(self, fd):
+        """
+        """
+        self._connections[fd].socket.close()
+        self.on_dropped_connection(self._connections[fd])
+        del self._connections[fd]
+        
