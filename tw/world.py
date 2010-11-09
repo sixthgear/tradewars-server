@@ -56,7 +56,7 @@ class Player(object):
     def flush(self):
         while self.output_queue:
             data = self.output_queue.pop(0)
-            self._connection.socket.send(data)
+            self._connection.send(data)
                 
     def __repr__(self):
         return self.name
