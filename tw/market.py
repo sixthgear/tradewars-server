@@ -14,7 +14,7 @@ class Market(object):
         self.prices = {}
         self.supply = {}
         self.production = {}
-        self.materials = list(commerce.material_names)[:5]        
+        self.materials = list(commerce.material_names)[:12]        
         self.id_gen = itertools.count()
     
     @property
@@ -29,7 +29,7 @@ class Market(object):
         # zero supply and production for all available materials
         for p,m in itertools.product(self.world.planets, self.materials):
             p.production[m] = 0
-            p.supply[m] = 1000
+            p.supply[m] = 800
                     
         # iterate 1000 times. perhaps we can use some noise here instead
         for i in range(1000):
@@ -53,12 +53,11 @@ class Market(object):
             
             # We add a small bias to the positive side
             # so that economy is slightly inflationary in general.
-            # EDIT: this has been remove for study purposes
-            
+            # EDIT: this has been remove for study purposes            
             a.production[m] = a.production.get(m,0) + production_delta # +1 bias
             b.production[m] = b.production.get(m,0) - production_delta
-            a.supply[m] = a.supply.get(m,0) + supply_delta
-            b.supply[m] = b.supply.get(m,0) - supply_delta
+            a.supply[m] = max(0, a.supply.get(m,0) + supply_delta)
+            b.supply[m] = max(0, b.supply.get(m,0) - supply_delta)
         
         # update our global supply and production totals for each resource
         for p,m in itertools.product(self.world.planets, self.materials):
@@ -87,8 +86,8 @@ class Market(object):
         random.shuffle(pending_deals)
                 
         # process each deal in order -- updating the contracts, and removing it
-        # if complete. This is highly dependant on the order in which the pending 
-        # deals list is built -- thats why we shuffle.
+        # if complete. This is highly dependant on the order in which the 
+        # pending deals list is built -- thats why we shuffle.
         for b,s in pending_deals:
             # we can only deal the lowest amount requested
             amount = min(b.amount, s.amount)
@@ -200,34 +199,56 @@ class Market(object):
         print '~'
         mn = 'MARKET (%dcR)' % self.credits
         print \
-            mn.ljust(18) + \
-            str(sum(self.production.values())).rjust(5) + \
+            mn.ljust(16) +  \
+            str(sum(self.production.values())).rjust(4) + \
             str(sum(self.supply.values())).rjust(7)
         print '-' * 30
-        for m in self.materials:
-            print '    %s %s %s' % (
-                m.ljust(12), 
-                str(self.production[m]).rjust(6), 
-                str(self.supply[m]).rjust(6))
+        # MARKET OUTPUT COMMENTED OUT, BECASUSE TOTALS DO NOT CHANGE
+        # for m in self.materials:
+        #     print '    %s %s %s' % (
+        #         m.ljust(10), 
+        #         str(self.production[m]).rjust(6), 
+        #         str(self.supply[m]).rjust(6))
         print '~'        
+        
         print 'PLANETS'
-        for p in sorted(self.world.planets, key=lambda x: x.name):
+        
+        output = []
+        wrap = 4
+        for i, p in enumerate(sorted(self.world.planets, key=lambda x: x.name)):
+            col = i % wrap
+            row = i / wrap
+            
+            buffer = []
             pn = '%s (%dcR)' % (p.name, p.credits)
-            print \
-                pn.ljust(16) + \
+            buffer.append( \
+                pn.ljust(14) + \
                 str(sum(p.production.values())).rjust(7) + \
-                str(sum(p.supply.values())).rjust(7)
-            print '-' * 30
+                str(sum(p.supply.values())).rjust(7))
+                
+            buffer.append('+' + '-' * 28 + '+')
             for m in self.materials:
-                print '    %s %s %s' % (
-                    m.ljust(12), 
+                buffer.append('|   %s %s %s |' % (
+                    m.ljust(10), 
                     str(p.production[m]).rjust(6), 
-                    str(p.supply[m]).rjust(6))
-            print
+                    str(p.supply[m]).rjust(6)))
+            buffer.append('+' + '-' * 28 + '+')        
+            buffer.append('')
+            
+            if col == 0:
+                output += buffer
+            else:
+                for i, line in enumerate(buffer):
+                    idx = -len(buffer)+i
+                    output[idx] = output[idx].ljust(32*col) + line
+        for o in output: print o
+                
+            
+            
             
         print '~'
         print 'CONTRACTS'
-        for c in self.contracts:
+        for c in sorted(self.contracts, key=lambda x: x.planet.name):
             print c
         print '~'
 
@@ -241,7 +262,7 @@ if __name__ == '__main__':
     w = world.World()
     
     print 'PLANETS'
-    for i in range(4):
+    for i in range(8):
         p = world.Planet()        
         if i != 0:
             p.position = world.Point(
