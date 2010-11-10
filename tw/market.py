@@ -14,7 +14,7 @@ class Market(object):
         self.prices = {}
         self.supply = {}
         self.production = {}
-        self.materials = list(commerce.material_names)[:1]        
+        self.materials = list(commerce.material_names)[:5]        
         self.id_gen = itertools.count()
     
     @property
