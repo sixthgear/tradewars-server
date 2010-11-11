@@ -61,13 +61,16 @@ class StarSystem(object):
         """
         Caches a distance map from each planet to every other planet.
         This is an integer representing the number of turns it would take to 
-        reach that planet assuming a speed on 1000 per turn.
-        """
-        for a,b in itertools.product(self.planets, self.planets):
+        reach that planet assuming a speed of 1000 Gm per turn.
+        """        
+        for a,b in itertools.combinations(self.planets, 2):
             if not self.distance_map.has_key(a):
                 self.distance_map[a] = {}
+            if not self.distance_map.has_key(b):
+                self.distance_map[b] = {}                
             dx2 = (b.position.x - a.position.x) ** 2
             dy2 = (b.position.y - a.position.y) ** 2
-            self.distance_map[a][b] = \
-                int((math.ceil(math.sqrt(dx2 + dy2) / 1000)))
-            
+            dist = int((math.ceil(math.sqrt(dx2 + dy2) / 1000)))
+            self.distance_map[a][b] = dist
+            self.distance_map[b][a] = dist
+                

@@ -108,7 +108,11 @@ class Market(object):
         # right now buyers will only pick sellers that
         # match their price, but wont prioritize for quantity.
         
-        random.shuffle(pending_deals)
+        # random.shuffle(pending_deals)
+        
+        # or maybe prioritize bigger deals!
+        pending_deals.sort(
+            key=lambda x: max(x[0].price, x[1].price),reverse=True)
                 
         # process each deal in order -- updating the contracts, and removing it
         # if complete. This is highly dependant on the order in which the 
@@ -174,8 +178,8 @@ class Market(object):
             # if their production rate is close to zero
             elif production > 0:    
                 type = commerce.SELL
-                # only sell if we have more than 2000 units
-                if supply < 2000: continue
+                # only sell if we have more than 1500 units
+                if supply <= 1500: continue
                 # sell as much as possible, in 500 unit increments
                 amount = (supply / 500) * 500
                 # start price naively at 50, and count down in fives

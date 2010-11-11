@@ -36,8 +36,5 @@ class Contract(object):
             self.material, 
             self.amount, 
             self.price
-        )
-        
+        )        
         return '%d %s %s %s %d %dcR' % r
-
-        
