@@ -30,11 +30,11 @@ class Contract(object):
 
     def __repr__(self):
         r = (
-            self.id, 
-            self.planet.name, 
-            'SELL' if self.type else 'BUY', 
-            self.material, 
-            self.amount, 
-            self.price
+            str(self.id).ljust(4), 
+            self.planet.name.ljust(11), 
+            ('SELL' if self.type else 'BUY').ljust(5), 
+            self.material.ljust(12), 
+            str(self.amount).rjust(5), 
+            (str(self.price)+'cR').rjust(5)
         )        
-        return '%d %s %s %s %d %dcR' % r
+        return '%s %s %s %s %s %s' % r

@@ -42,7 +42,7 @@ class StarSystem(object):
         """
         Build an inital population of planets.       
         """ 
-        ng = files.random_line('data/planets.txt')       
+        ng = files.random_line('./tw/data/planets.txt')       
         for i in range(n_planets):
             p = Planet(name=ng.next())
             if i != 0:
@@ -51,12 +51,9 @@ class StarSystem(object):
                     random.randrange(-5000, 5000)
                 )
             p.credits = 100000
-            self.planets.append(p)            
-        
+            self.planets.append(p)                    
         self.build_distance_map()
-        # print self.distance_map
-        
-    
+                    
     def build_distance_map(self):
         """
         Caches a distance map from each planet to every other planet.

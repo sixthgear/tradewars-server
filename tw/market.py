@@ -13,13 +13,28 @@ class Market(object):
         self.contracts = []
         self.materials = []
         self.prices = {}
-        self.supply = {}
-        self.production = {}
+        # self.supply = {}
+        # self.production = {}
         self.id_gen = itertools.count()
                     
     @property
     def credits(self):
         return sum((p.credits for p in self.world.planets))
+        
+    @property
+    def supply(self):
+        d = {}
+        for p,m in itertools.product(self.world.planets, self.materials):
+            d[m] = d.get(m,0) + p.supply[m]
+        return d
+    
+    @property
+    def production(self):
+        d = {}
+        for p,m in itertools.product(self.world.planets, self.materials):
+            d[m] = d.get(m,0) + p.production[m]
+        return d
+
             
     def randomize(self, n_materials=5):
         """
@@ -41,7 +56,7 @@ class Market(object):
             p.supply[m] = 1000
                     
         # iterate 1000 times. perhaps we can use some noise here instead
-        for i in range(1000):
+        for i in range(125 * len(self.world.planets)):
             
             # randomly choose 2 planets and a material
             a = random.choice(self.world.planets)
@@ -68,10 +83,14 @@ class Market(object):
             a.supply[m] = max(0, a.supply.get(m,0) + supply_delta)
             b.supply[m] = max(0, b.supply.get(m,0) - supply_delta)
         
+        # COMMENTED OUT for now, so that i dont introduce any
+        # bugs where I update the local supply, but forget to
+        # modify the global!
+        
         # update our global supply and production totals for each resource
-        for p,m in itertools.product(self.world.planets, self.materials):
-            self.production[m] = self.production.get(m,0) + p.production[m]
-            self.supply[m] = self.supply.get(m,0) + p.supply[m]
+        # for p,m in itertools.product(self.world.planets, self.materials):
+        #     self.production[m] = self.production.get(m,0) + p.production[m]
+        #     self.supply[m] = self.supply.get(m,0) + p.supply[m]
         
                 
     def update(self):        
@@ -112,7 +131,7 @@ class Market(object):
         
         # or maybe prioritize bigger deals!
         pending_deals.sort(
-            key=lambda x: max(x[0].price, x[1].price),reverse=True)
+            key=lambda x: max(x[0].price, x[1].price), reverse=True)
                 
         # process each deal in order -- updating the contracts, and removing it
         # if complete. This is highly dependant on the order in which the 
@@ -150,9 +169,14 @@ class Market(object):
             # modify local supply based on production rate
             # local supply can not deplete below zero
             p.supply[m] = max(0, p.supply[m] + p.production[m])
-            # also modify global supply
+            
+            # also modify global supply            
             # this is only important if the global production rates are non-zero
-            self.supply[m] = max(0, self.supply[m] + p.production[m])
+            # COMMENTED OUT for now, so that i dont introduce any
+            # bugs where I update the local supply, but forget to
+            # modify the global!
+            
+            # self.supply[m] = max(0, self.supply[m] + p.production[m])
             
             # set convinience varaibles for further reference
             supply = p.supply[m]
@@ -239,20 +263,17 @@ class Market(object):
         print '~'
         mn = 'MARKET %dcR' % self.credits
         print \
-            mn.ljust(18) +  \
+            mn.ljust(18) + \
             str(sum(self.production.values())).rjust(6) + \
             str(sum(self.supply.values())).rjust(6)
         print '-' * 30
-
         for m in self.materials:
             print \
                 m.ljust(18) + \
                 str(self.production[m]).rjust(6) + \
-                str(self.supply[m]).rjust(6)
-            
-        print '~'        
-        
-        print 'PLANETS'        
+                str(self.supply[m]).rjust(6)            
+        print '~'
+        print 'PLANETS'
         output = []
         wrap = 4
         for i, p in enumerate(sorted(self.world.planets, key=lambda x: x.name)):
@@ -272,7 +293,7 @@ class Market(object):
                     m.ljust(20) + \
                     str(p.production[m]).rjust(4) + \
                     str(p.supply[m]).rjust(6))
-            # buffer.append('+' + '-' * 28 + '+')        
+    
             buffer.append('')
             
             if col == 0:
@@ -281,8 +302,7 @@ class Market(object):
                 for i, line in enumerate(buffer):
                     idx = -len(buffer)+i
                     output[idx] = output[idx].ljust(32*col) + line
-        for o in output: print o
-                
+        for o in output: print o                
         print '~'
         print 'CONTRACTS'
         for c in sorted(self.contracts, key=lambda x: x.material):
@@ -296,6 +316,12 @@ if __name__ == '__main__':
     """
     import sys
     import world
+    import signal
+    
+    def signal_handler(signal, frame):        
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
     
     n_planets = int(sys.argv[1]) if len(sys.argv) > 1 else 8
     n_materials = int(sys.argv[2]) if len(sys.argv) > 2 else 5

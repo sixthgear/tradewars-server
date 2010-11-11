@@ -8,13 +8,18 @@ def random_line(filename):
     not read the whole file, just seek to a random spot and return
     the next full line.
     """
+    used = set()    
     with open(filename,'r') as file:
         size = os.stat(filename)[6]
         while True:
             # pick a random byte from the file, wrap around to file size
-            n = random.randint(0,size - 1) % size
+            n = random.randint(0, size-1) % size
             file.seek(n)
             # read a dummy-line. We do this to make sure that our random seek
             # didn't stick us in the middle of a line.
-            file.readline()            
-            yield file.readline().strip()
+            file.readline()
+            line = file.readline().strip()
+            while line in used:
+                line = file.readline().strip()
+            used.add(line)
+            yield line

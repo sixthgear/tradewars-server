@@ -21,17 +21,19 @@ class Game(object):
     Main Game controller object.
     """
     
-    def __init__(self):
+    def __init__(self):        
+        self.server = None
+        self.timer = None
+        self.world = world.StarSystem()
+        self.market = market.Market(self.world)
+        self.warden = warden.Warden()        
         self.state = LAUNCHING
         self.next_game_time = datetime.datetime.now() \
             + datetime.timedelta(seconds=5)
-        self.pregame_delay = 5
+        self.pregame_delay = 5                
         self.tick = 0
         self.players = {}
-        self.world = world.StarSystem()
-        self.server = None
-        self.timer = None
-        self.warden = warden.Warden()
+        
                    
     def run(self, port=4000):
         """
@@ -92,10 +94,26 @@ class Game(object):
         """    
         assert self.state in (PREGAME,)
         print 'BUILDING: creating game world and market'
-        self.state = BUILDING
-        # generate planets
+        self.state = BUILDING        
+        # generate planets        
+        self.world.randomize()
         # generate market
-        # create players
+        self.market.randomize()
+        # TODO create players
+                
+        print 'PLANETS'
+        for p in self.world.planets:
+            print p.name, p.position.x, p.position.y 
+        print '~'
+        
+        self.server.sendall('PLANETS\n')
+        for p in self.world.planets:
+            self.server.sendall('%s %d,%d\n' % (
+                p.name,
+                p.position.x, 
+                p.position.y))
+        self.server.sendall('~\n')
+                
         self.state = PLAYING
         print 'PLAYING: starting turns'
         self.timer = ioloop.PeriodicCallback(self.update, 1500)
@@ -200,12 +218,19 @@ class Game(object):
         # DETECT DEADLOCKS!
         
         # 4. simulate market
+        self.market.update()
+        self.market.output()
         
         # 5. write to connections
         # write common output
         
         print 'sending tick %d...' % self.tick
         self.server.sendall('TURN %d\n' % self.tick)
+        
+        self.server.sendall('CONTRACTS\n');
+        for c in self.market.contracts:
+            self.server.sendall(str(c)+'\n')
+        self.server.sendall('~\n')
         
         # write individual output
         for p in self.players.values():
