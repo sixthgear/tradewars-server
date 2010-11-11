@@ -5,6 +5,7 @@ from tornado import ioloop
 import server
 import market
 import parser
+import player
 import world
 import warden
 
@@ -27,7 +28,7 @@ class Game(object):
         self.pregame_delay = 5
         self.tick = 0
         self.players = {}
-        self.world = world.World()
+        self.world = world.StarSystem()
         self.server = None
         self.timer = None
         self.warden = warden.Warden()
@@ -135,22 +136,22 @@ class Game(object):
             plist = filter(lambda x: x[1].name == username, \
                 self.players.items())
             if not plist:
-                player = world.Player(connection)
-                player.name = username
-                self.players[connection.fileno] = player
-                print '%s has joined the game.' % player.name
+                p = player.Player(connection)
+                p.name = username
+                self.players[connection.fileno] = p
+                print '%s has joined the game.' % p.name
             else:
-                fileno, player = plist[0]
+                fileno, p = plist[0]
                 self.players[fileno].disconnect()
                 del self.players[fileno]
                 
-                self.players[connection.fileno] = player
+                self.players[connection.fileno] = p
                 self.players[connection.fileno].connection = connection
                 
-                print '%s has rejoined the game.' % player.name
+                print '%s has rejoined the game.' % p.name
             
             connection.state = server.AUTHENTICATED            
-            connection.send('WELCOME %s\n' % player.name)            
+            connection.send('WELCOME %s\n' % p.name)            
         else:
             print '%s: INVALID TOKEN: %s' % (connection.fileno, token)
             connection.send('INVALID TOKEN\n')
@@ -173,8 +174,8 @@ class Game(object):
         if connection.state == server.AUTH:
             self.authenticate(connection, command)
         elif connection.state == server.AUTHENTICATED:
-            player = self.players[connection.fileno]
-            player.command_queue.append(command)
+            p = self.players[connection.fileno]
+            p.command_queue.append(command)
                                     
     def update(self):
         """

@@ -11,21 +11,30 @@ class Market(object):
     def __init__(self, world):
         self.world = world
         self.contracts = []
+        self.materials = []
         self.prices = {}
         self.supply = {}
         self.production = {}
-        self.materials = list(commerce.material_names)[:12]        
         self.id_gen = itertools.count()
-    
+                    
     @property
     def credits(self):
         return sum([p.credits for p in self.world.planets])
             
-    def randomize(self):
+    def randomize(self, n_materials=5):
         """
         Build inital market conditions for the passed world object
-        """
+        """                
+        # choose n materials -- perhaps this should be a function
+        # of the number of planets
+        self.materials = random.sample(commerce.material_names, n_materials)
         
+        # set prices -- start at 10cR per material
+        # lets try to set this based on general supply/demand
+        self.prices = {}
+        for m in self.materials:
+            self.prices[m] = 10
+                    
         # zero supply and production for all available materials
         for p,m in itertools.product(self.world.planets, self.materials):
             p.production[m] = 0
@@ -66,6 +75,9 @@ class Market(object):
         
                 
     def update(self):        
+        
+        # TODO 
+        # global price adjustment
         
         # BUY AND SELL
         # to be replaced with players    
@@ -132,8 +144,10 @@ class Market(object):
                 type = commerce.BUY
                 # buy enough, ideally to last for another 20 turns
                 amount = -production * 20 - supply
-                # set a price based on how close we are to running out
-                price = min(50, 5 * (6-turns_left))
+                # set a price based on how close we are to running out                
+                price = self.prices[m]
+                # price = min(50, 5 * (6-turns_left))
+                
                 
             # new contracts -- only net producers to make SELL contracts
             # hopefully we can help planets decide to become middlemen
@@ -145,8 +159,9 @@ class Market(object):
                 # sell as much as possible, in 500 unit increments
                 amount = (supply / 500) * 500
                 # start price naively at 50, and count down in fives
-                price = max(5, 5 * (10 - (supply-2000)/production))
-                
+                price = self.prices[m]
+                # price = max(5, 5 * (10 - (supply-2000)/production))
+                                
             # some planets may be production neutral for a given material
             else:                
                 continue
@@ -197,22 +212,22 @@ class Market(object):
                 s.planet.name,
                 price)
         print '~'
-        mn = 'MARKET (%dcR)' % self.credits
+        mn = 'MARKET-%dcR' % self.credits
         print \
-            mn.ljust(16) +  \
-            str(sum(self.production.values())).rjust(4) + \
-            str(sum(self.supply.values())).rjust(7)
+            mn.ljust(18) +  \
+            str(sum(self.production.values())).rjust(6) + \
+            str(sum(self.supply.values())).rjust(6)
         print '-' * 30
-        # MARKET OUTPUT COMMENTED OUT, BECASUSE TOTALS DO NOT CHANGE
-        # for m in self.materials:
-        #     print '    %s %s %s' % (
-        #         m.ljust(10), 
-        #         str(self.production[m]).rjust(6), 
-        #         str(self.supply[m]).rjust(6))
+
+        for m in self.materials:
+            print \
+                '    ' + m.ljust(14) + \
+                str(self.production[m]).rjust(6) + \
+                str(self.supply[m]).rjust(6)
+            
         print '~'        
         
-        print 'PLANETS'
-        
+        print 'PLANETS'        
         output = []
         wrap = 4
         for i, p in enumerate(sorted(self.world.planets, key=lambda x: x.name)):
@@ -220,19 +235,19 @@ class Market(object):
             row = i / wrap
             
             buffer = []
-            pn = '%s (%dcR)' % (p.name, p.credits)
+            pn = '%s-%d' % (p.name, p.credits)
             buffer.append( \
-                pn.ljust(14) + \
-                str(sum(p.production.values())).rjust(7) + \
-                str(sum(p.supply.values())).rjust(7))
+                pn.ljust(18) + \
+                str(sum(p.production.values())).rjust(6) + \
+                str(sum(p.supply.values())).rjust(6))
                 
-            buffer.append('+' + '-' * 28 + '+')
+            buffer.append('-' * 30 )
             for m in self.materials:
-                buffer.append('|   %s %s %s |' % (
-                    m.ljust(10), 
-                    str(p.production[m]).rjust(6), 
-                    str(p.supply[m]).rjust(6)))
-            buffer.append('+' + '-' * 28 + '+')        
+                buffer.append(
+                    '    ' + m.ljust(16) + \
+                    str(p.production[m]).rjust(4) + \
+                    str(p.supply[m]).rjust(6))
+            # buffer.append('+' + '-' * 28 + '+')        
             buffer.append('')
             
             if col == 0:
@@ -243,12 +258,9 @@ class Market(object):
                     output[idx] = output[idx].ljust(32*col) + line
         for o in output: print o
                 
-            
-            
-            
         print '~'
         print 'CONTRACTS'
-        for c in sorted(self.contracts, key=lambda x: x.planet.name):
+        for c in sorted(self.contracts, key=lambda x: x.material):
             print c
         print '~'
 
@@ -259,25 +271,17 @@ if __name__ == '__main__':
     Dumbass market sim ticker.
     """
     import world
-    w = world.World()
-    
-    print 'PLANETS'
-    for i in range(8):
-        p = world.Planet()        
-        if i != 0:
-            p.position = world.Point(
-                random.randrange(-10000, 10000), 
-                random.randrange(-10000, 10000)
-            )
-        p.credits = 100000
-        w.planets.append(p)
-        print p
-    print '~'
-            
+    w = world.StarSystem()
+    w.randomize()            
     market = Market(w)
     market.randomize()
-    tick = 0
     
+    print 'PLANETS'
+    for p in w.planets:
+        print p.name, p.position.x, p.position.y 
+    print '~'
+        
+    tick = 0
     while True:
         tick += 1
         print 'TURN %d' % tick        
