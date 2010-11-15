@@ -36,13 +36,13 @@ class StarSystem(object):
     
     def __init__(self):
         self.planets = []
-        self.distance_map = {}
+        self.distance_map = collections.defaultdict(dict)
     
     def randomize(self, n_planets=8):
         """
         Build an inital population of planets.       
         """ 
-        ng = files.random_line('./tw/data/planets.txt')       
+        ng = files.random_line('./tw/data/planets.txt')
         for i in range(n_planets):
             p = Planet(name=ng.next())
             if i != 0:
@@ -60,14 +60,9 @@ class StarSystem(object):
         This is an integer representing the number of turns it would take to 
         reach that planet assuming a speed of 1000 Gm per turn.
         """        
-        for a,b in itertools.combinations(self.planets, 2):
-            if not self.distance_map.has_key(a):
-                self.distance_map[a] = {}
-            if not self.distance_map.has_key(b):
-                self.distance_map[b] = {}                
+        for a,b in itertools.combinations(self.planets, 2): 
             dx2 = (b.position.x - a.position.x) ** 2
             dy2 = (b.position.y - a.position.y) ** 2
             dist = int((math.ceil(math.sqrt(dx2 + dy2) / 1000)))
             self.distance_map[a][b] = dist
             self.distance_map[b][a] = dist
-                

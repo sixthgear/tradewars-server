@@ -32,6 +32,7 @@ class Game(object):
             + datetime.timedelta(seconds=5)
         self.pregame_delay = 5                
         self.tick = 0
+        self.tick_length = 1500
         self.players = {}
         
                    
@@ -56,10 +57,11 @@ class Game(object):
         or get going ASAP.
         """
         print 'TW is ready to rock on port %d.' % self.server.port
-        if datetime.datetime.now() > self.next_game_time:
+        if datetime.datetime.now() >= self.next_game_time:
             self.open_pregame()
         else:
-            print 'WAITING: NEXT GAME at %s.' % self.next_game_time
+            print 'WAITING: NEXT GAME %d' % \
+                time.mktime(self.next_game_time.timetuple())
             self.timer = ioloop.PeriodicCallback(self.waiting_update, 1000)
             self.timer.start()        
             self.state = WAITING        
@@ -71,7 +73,8 @@ class Game(object):
         connections for the next game.
         """
         if self.state == WAITING:
-            if datetime.datetime.now() > self.next_game_time:
+            if datetime.datetime.now() >= self.next_game_time:
+                self.timer.stop()
                 self.open_pregame()
             
     def open_pregame(self):
@@ -116,7 +119,7 @@ class Game(object):
                 
         self.state = PLAYING
         print 'PLAYING: starting turns'
-        self.timer = ioloop.PeriodicCallback(self.update, 1500)
+        self.timer = ioloop.PeriodicCallback(self.update, self.tick_length)
         self.timer.start()        
     
     def shutdown(self):
@@ -140,7 +143,8 @@ class Game(object):
         # report this connection to warden
         self.warden.report_connection()
         if self.state == WAITING:
-            connection.send('NEXT GAME AT %s\n' % self.next_game_time)
+            connection.send('NEXT GAME %d\n' % \
+                time.mktime(self.next_game_time.timetuple()))
             connection.disconnect()            
         if self.state in (PREGAME, BUILDING, PLAYING):            
             connection.state = server.AUTH
@@ -197,7 +201,7 @@ class Game(object):
                                     
     def update(self):
         """
-        Called every 1500ms.
+        Called every <tick_length> ms.
         """
         self.tick += 1
         

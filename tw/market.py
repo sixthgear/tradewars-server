@@ -5,8 +5,7 @@ import commerce
     
 class Market(object):
     """
-    A class designed to contain a simple supply/demand market model.    
-    TODO: everything.
+    A class designed to contain a simple supply/demand market model.
     """
     def __init__(self, world):
         self.world = world
@@ -262,16 +261,16 @@ class Market(object):
                 price)
         print '~'
         mn = 'MARKET %dcR' % self.credits
-        print \
+        print (
             mn.ljust(18) + \
             str(sum(self.production.values())).rjust(6) + \
-            str(sum(self.supply.values())).rjust(6)
+            str(sum(self.supply.values())).rjust(6))
         print '-' * 30
         for m in self.materials:
-            print \
+            print (
                 m.ljust(18) + \
                 str(self.production[m]).rjust(6) + \
-                str(self.supply[m]).rjust(6)            
+                str(self.supply[m]).rjust(6))
         print '~'
         print 'PLANETS'
         output = []
