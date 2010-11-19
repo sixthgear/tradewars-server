@@ -56,12 +56,12 @@ class Game(object):
         After the server is up, find out if we should wait to start the game,
         or get going ASAP.
         """
-        print 'TW is ready to rock on port %d.' % self.server.port
+        print ('TW is ready to rock on port %d.' % self.server.port)
         if datetime.datetime.now() >= self.next_game_time:
             self.open_pregame()
         else:
-            print 'WAITING: NEXT GAME %d' % \
-                time.mktime(self.next_game_time.timetuple())
+            print ('WAITING: NEXT GAME %d' % \
+                time.mktime(self.next_game_time.timetuple()))
             self.timer = ioloop.PeriodicCallback(self.waiting_update, 1000)
             self.timer.start()        
             self.state = WAITING        
@@ -85,8 +85,8 @@ class Game(object):
         """
         assert self.state in (LAUNCHING, WAITING, POSTGAME)
         self.state = PREGAME
-        print 'PREGAME: Allowing connections, game begins in %d seconds' \
-            % self.pregame_delay
+        print('PREGAME: Allowing connections, game begins in %d seconds' \
+            % self.pregame_delay)
         self.timer = None
         ioloop.IOLoop.instance().add_timeout(time.time() \
             + self.pregame_delay, self.start_game)
@@ -96,7 +96,7 @@ class Game(object):
         Begin the actual game.
         """    
         assert self.state in (PREGAME,)
-        print 'BUILDING: creating game world and market'
+        print('BUILDING: creating game world and market')
         self.state = BUILDING        
         # generate planets        
         self.world.randomize()
@@ -104,10 +104,10 @@ class Game(object):
         self.market.randomize()
         # TODO create players
                 
-        print 'PLANETS'
+        print('PLANETS')
         for p in self.world.planets:
-            print p.name, p.position.x, p.position.y 
-        print '~'
+            print (p.name, p.position.x, p.position.y )
+        print ('~')
         
         self.server.sendall('PLANETS\n')
         for p in self.world.planets:
@@ -118,7 +118,7 @@ class Game(object):
         self.server.sendall('~\n')
                 
         self.state = PLAYING
-        print 'PLAYING: starting turns'
+        print ('PLAYING: starting turns')
         self.timer = ioloop.PeriodicCallback(self.update, self.tick_length)
         self.timer.start()        
     
@@ -126,20 +126,20 @@ class Game(object):
         """
         Goodnight! This is called from the SIGINT handler in the launch script.
         """
-        print 'Shutting down...'
+        print ('Shutting down...')
         if self.timer: 
             self.timer.stop()
         self.server.stop()
         ioloop.IOLoop.instance().stop()        
                 
     def on_stop(self): 
-        print 'Server stopped.'
+        print ('Server stopped.')
         
     def on_connect(self, connection):
         """
         Called whenever the server has a new connection.
         """        
-        print 'new connection from %s.' % connection.address[0]
+        print ('new connection from %s.' % connection.address[0])
         # report this connection to warden
         self.warden.report_connection()
         if self.state == WAITING:
@@ -161,7 +161,7 @@ class Game(object):
                 p = player.Player(connection)
                 p.name = username
                 self.players[connection.fileno] = p
-                print '%s has joined the game.' % p.name
+                print ('%s has joined the game.' % p.name)
             else:
                 fileno, p = plist[0]
                 self.players[fileno].disconnect()
@@ -170,20 +170,20 @@ class Game(object):
                 self.players[connection.fileno] = p
                 self.players[connection.fileno].connection = connection
                 
-                print '%s has rejoined the game.' % p.name
+                print ('%s has rejoined the game.' % p.name)
             
             connection.state = server.AUTHENTICATED            
             connection.send('WELCOME %s\n' % p.name)            
         else:
-            print '%s: INVALID TOKEN: %s' % (connection.fileno, token)
+            print ('%s: INVALID TOKEN: %s' % (connection.fileno, token))
             connection.send('INVALID TOKEN\n')
             connection.disconnect()
             
     def on_disconnect(self, connection):
         if self.players.has_key(connection.fileno):
             self.players[connection.fileno].disconnect()
-            print '%s has disconnected.' \
-                % self.players[connection.fileno].name
+            print ('%s has disconnected.' \
+                % self.players[connection.fileno].name)
             # del self.players[connection.fileno]
             
         
@@ -210,13 +210,13 @@ class Game(object):
         
         for fileno, p in self.players.items():            
             if len(p.command_queue) > 1:
-                print 'Error for %s: more than one command for this turn.' % p
+                print('Error for %s: more than one command for this turn.' % p)
                 p.output('Error: more than one command for this turn. \n')
                 p.command_queue = []
                 continue                
             elif p.command_queue:                
                 command = p.command_queue.pop(0)
-                print parser.parse(command, self.world, p)
+                print(parser.parse(command, self.world, p))
         
         # 3. update game state
         # DETECT DEADLOCKS!
@@ -228,7 +228,7 @@ class Game(object):
         # 5. write to connections
         # write common output
         
-        print 'sending tick %d...' % self.tick
+        print ('sending tick %d...' % self.tick)
         self.server.sendall('TURN %d\n' % self.tick)
         
         self.server.sendall('CONTRACTS\n');
