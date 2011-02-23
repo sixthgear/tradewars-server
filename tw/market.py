@@ -1,6 +1,7 @@
 import random
 import math
 import itertools
+import collections
 import commerce
     
 class Market(object):
@@ -42,46 +43,57 @@ class Market(object):
         # choose n materials -- perhaps this should be a function
         # of the number of planets
         self.materials = random.sample(commerce.material_names, n_materials)
+                            
+        # zero supply and production for all available materials
+        for p,m in itertools.product(self.world.planets, self.materials):
+            # p.production[m] = 0
+            # p.supply[m] = 1000
+            p.production[m] = random.randrange(-150, 150)
+            # random.randrange(-75, 75) + random.randrange(-75, 75)
+            p.supply[m] = 1000 + p.production[m] * 4
+            
+                    
+        # iterate n_planets*125 times. perhaps we can use some noise here
+        # instead
+        
+        # for i in range(125 * len(self.world.planets)):
+        #     
+        #     # randomly choose 2 planets and a material
+        #     a = random.choice(self.world.planets)
+        #     b = random.choice(self.world.planets)
+        #     m = random.choice(self.materials)
+        #     if a == b: continue
+        #     
+        #     # set a random production delta for this iteration
+        #     production_delta = random.randrange(0,20)
+        #     # modify supply by a smimilar factor, this is to encourage
+        #     # planets to get inital contracts up early, so players
+        #     # can quickly decide what to do
+        #     supply_delta = production_delta * 4
+        #     
+        #     # make opposing production modifications for this material
+        #     # that means if we make one planet a producer, another must
+        #     # become a consumer.
+        # 
+        #     # We add a small bias to the positive side
+        #     # so that economy is slightly inflationary in general.
+        #     # EDIT: this has been remove for study purposes            
+        #     a.production[m] = a.production.get(m,0) + production_delta # +1 bias
+        #     b.production[m] = b.production.get(m,0) - production_delta
+        #     a.supply[m] = max(0, a.supply.get(m,0) + supply_delta)
+        #     b.supply[m] = max(0, b.supply.get(m,0) - supply_delta)
         
         # set prices -- start at 10cR per material
         # lets try to set this based on general supply/demand
         self.prices = {}
+        total_supply = sum(self.supply.values())
+        num_materials = len(self.materials)
         for m in self.materials:
-            self.prices[m] = 10
-                    
-        # zero supply and production for all available materials
-        for p,m in itertools.product(self.world.planets, self.materials):
-            p.production[m] = 0
-            p.supply[m] = 1000
-                    
-        # iterate 1000 times. perhaps we can use some noise here instead
-        for i in range(125 * len(self.world.planets)):
-            
-            # randomly choose 2 planets and a material
-            a = random.choice(self.world.planets)
-            b = random.choice(self.world.planets)
-            m = random.choice(self.materials)
-            if a == b: continue
-            
-            # set a random production delta for this iteration
-            production_delta = random.randrange(0,20)
-            # modify supply by a smimilar factor, this is to encourage
-            # planets to get inital contracts up early, so players
-            # can quickly decide what to do
-            supply_delta = production_delta * 4
-            
-            # make opposing production modifications for this material
-            # that means if we make one planet a producer, another must
-            # become a consumer. 
-            
-            # We add a small bias to the positive side
-            # so that economy is slightly inflationary in general.
-            # EDIT: this has been remove for study purposes            
-            a.production[m] = a.production.get(m,0) + production_delta # +1 bias
-            b.production[m] = b.production.get(m,0) - production_delta
-            a.supply[m] = max(0, a.supply.get(m,0) + supply_delta)
-            b.supply[m] = max(0, b.supply.get(m,0) - supply_delta)
-        
+            base_ppu = self.credits / total_supply
+            modifier = float(total_supply) / num_materials / self.supply[m]
+            print self.credits, self.supply[m], base_ppu, modifier
+            self.prices[m] = int(base_ppu * modifier)
+                
         # COMMENTED OUT for now, so that i dont introduce any
         # bugs where I update the local supply, but forget to
         # modify the global!
@@ -115,12 +127,12 @@ class Market(object):
                                 
         # build a list of pending deals, where there are matching buy and sell
         # contracts
-        for b, s in itertools.product(buyers, sellers):            
+        for b, s in itertools.product(buyers, sellers):
             if b.planet == s.planet: continue
             if b.material != s.material: continue
             if b.price < s.price: continue            
             pending_deals.append((b,s))
-        
+                    
         # shuffle so that the first few planets dont steal all the deals
         # TODO - this needs to be optimized, and made fair
         # right now buyers will only pick sellers that
@@ -268,9 +280,11 @@ class Market(object):
         print '-' * 30
         for m in self.materials:
             print (
-                m.ljust(18) + \
+                m.ljust(13) + \
+                (str(self.prices[m])+'cR').rjust(5) +\
                 str(self.production[m]).rjust(6) + \
                 str(self.supply[m]).rjust(6))
+                
         print '~'
         print 'PLANETS'
         output = []

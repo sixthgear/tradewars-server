@@ -15,11 +15,17 @@ def random_line(filename):
             # pick a random byte from the file, wrap around to file size
             n = random.randint(0, size-1) % size
             file.seek(n)
-            # read a dummy-line. We do this to make sure that our random seek
+            
+            # read a dummy line. We do this to make sure that our random seek
             # didn't stick us in the middle of a line.
             file.readline()
             line = file.readline().strip()
+            
+            # loop until we hit an unused line
+            # TODO: this may fail if the loop hits the EOF
             while line in used:
                 line = file.readline().strip()
+            
+            # remember this line so we don't yield it again.    
             used.add(line)
             yield line

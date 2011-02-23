@@ -17,6 +17,12 @@ material_names = set((
 
 class Contract(object):
     """
+    A contract is a request to buy or sell a particular amount of a particular 
+    good at a particular price at a certain location (whew). Issuing and 
+    completing contracts is the basis for all trading that occurs in the game. 
+    Contracts may be issued on any turn by either the internal market model, or 
+    by the players themselves. At the start of every turn, players will be 
+    informed of all the currently open contracts on the market.
     """
     def __init__(self):
         self.id = 0

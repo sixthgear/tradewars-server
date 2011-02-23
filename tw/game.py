@@ -107,7 +107,7 @@ class Game(object):
         print('PLANETS')
         for p in self.world.planets:
             print (p.name, p.position.x, p.position.y )
-        print ('~')
+        print('~')
         
         self.server.sendall('PLANETS\n')
         for p in self.world.planets:
@@ -118,7 +118,11 @@ class Game(object):
         self.server.sendall('~\n')
                 
         self.state = PLAYING
-        print ('PLAYING: starting turns')
+        print('PLAYING: starting turns')
+        
+        # TODO: rather than a periodic callback, this should be rescheduled 
+        # after every tick. This will try and prevent unfair turns caused
+        # by a single connection lagging, or any server slowness.
         self.timer = ioloop.PeriodicCallback(self.update, self.tick_length)
         self.timer.start()        
     

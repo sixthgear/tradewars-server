@@ -87,3 +87,5 @@ In a static model like this, there should be a price equilibrium somewhere, and 
 If we decide to change production rates, how can we model that? I'm not sure using noise to modify production rates is fair, because it then becomes much harder for bots to build a predictible simulation of future prices.
     
 Perhaps vast oversupply and undersupply situations might be corrected dynamically, with a planet deciding to become a consumer or producer to try to correct this situation -- we do not however want to create a situation where all prices are generally the same!
+
+2011-02-22: How should planets handle existing contracts when they are ready to produce their own contracts? For instance, what happens if a planet is about to issue a BUY contract for 800 nuclides, but a SELL contract already exists at that planet.  
