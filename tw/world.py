@@ -25,13 +25,13 @@ class Planet(object):
 
 class StarSystem(object):
     """
-    Model of a single star system where our game takes place. Planet position is 
-    measured in gigameters. Our system will have a possible area of approx. 
+    Model of a single star system where our game takes place. Planet position   
+    is measured in gigameters. Our system will have a possible area of approx. 
     10000^2 Gm. For reference, the Aphelion of Neptune (the outermost planet in 
-    the Sol System is 4,554 Gm, which gives our virtual planets roughly the same 
-    area to work in. We strangely stick a planet at (0,0), the spot you'd expect 
-    to see the star of the system, but since we aren't modelling orbits, or
-    sticking a trading post in the sun, this should be ok.
+    the Sol System is 4,554 Gm, which gives our virtual planets roughly the 
+    same area to work in. We strangely stick a planet at (0,0), the spot you'd 
+    expect to see the star of the system, but since we aren't modelling orbits, 
+    or sticking a trading post in the sun, this should be ok.
     """
     
     def __init__(self):

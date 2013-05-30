@@ -30,11 +30,10 @@ class Game(object):
         self.state = LAUNCHING
         self.next_game_time = datetime.datetime.now() \
             + datetime.timedelta(seconds=5)
-        self.pregame_delay = 5                
+        self.pregame_delay = 5
         self.tick = 0
         self.tick_length = 1500
-        self.players = {}
-        
+        self.players = {}        
                    
     def run(self, port=4000):
         """
@@ -80,8 +79,8 @@ class Game(object):
     def open_pregame(self):
         """
         So gametime is here, let's allow connections, in preparation for the 
-        game. This is to allow every bot that wants to play a chance to get here 
-        before the ticks start rolling.
+        game. This is to allow every bot that wants to play a chance to get     
+        here before the ticks start rolling.
         """
         assert self.state in (LAUNCHING, WAITING, POSTGAME)
         self.state = PREGAME
@@ -188,8 +187,7 @@ class Game(object):
             self.players[connection.fileno].disconnect()
             print ('%s has disconnected.' \
                 % self.players[connection.fileno].name)
-            # del self.players[connection.fileno]
-            
+            # del self.players[connection.fileno]            
         
     def on_read(self, connection, data): 
         """
@@ -235,13 +233,22 @@ class Game(object):
         print ('sending tick %d...' % self.tick)
         self.server.sendall('TURN %d\n' % self.tick)
         
-        self.server.sendall('CONTRACTS\n');
+        self.server.sendall('CONTRACTS\n')
         for c in self.market.contracts:
             self.server.sendall(str(c)+'\n')
         self.server.sendall('~\n')
         
+        self.server.sendall('PLAYERS\n')
+        for p in self.players.values():
+            self.server.sendall(str(p)+'\n')
+        self.server.sendall('~\n')
+                        
         # write individual output
         for p in self.players.values():
+            p.output('CARGO\n')
+            p.output('~\n')
+            p.output('LAST\n')
+            p.output('~\n')            
             p.flush()
         
         # send ready command

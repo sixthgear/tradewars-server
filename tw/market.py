@@ -46,42 +46,37 @@ class Market(object):
                             
         # zero supply and production for all available materials
         for p,m in itertools.product(self.world.planets, self.materials):
-            # p.production[m] = 0
-            # p.supply[m] = 1000
-            p.production[m] = random.randrange(-150, 150)
-            # random.randrange(-75, 75) + random.randrange(-75, 75)
-            p.supply[m] = 1000 + p.production[m] * 4
-            
-                    
+            p.production[m] = 0
+            p.supply[m] = 1000
+                                
         # iterate n_planets*125 times. perhaps we can use some noise here
-        # instead
+        # instead        
+        for i in range(125 * len(self.world.planets)):
+            
+            # randomly choose 2 planets and a material
+            a = random.choice(self.world.planets)
+            b = random.choice(self.world.planets)
+            m = random.choice(self.materials)
+            if a == b: continue
+            
+            # set a random production delta for this iteration
+            production_delta = random.randrange(0,20)
+            # modify supply by a smimilar factor, this is to encourage
+            # planets to get inital contracts up early, so players
+            # can quickly decide what to do
+            supply_delta = production_delta * 4
+            
+            # make opposing production modifications for this material
+            # that means if we make one planet a producer, another must
+            # become a consumer.
         
-        # for i in range(125 * len(self.world.planets)):
-        #     
-        #     # randomly choose 2 planets and a material
-        #     a = random.choice(self.world.planets)
-        #     b = random.choice(self.world.planets)
-        #     m = random.choice(self.materials)
-        #     if a == b: continue
-        #     
-        #     # set a random production delta for this iteration
-        #     production_delta = random.randrange(0,20)
-        #     # modify supply by a smimilar factor, this is to encourage
-        #     # planets to get inital contracts up early, so players
-        #     # can quickly decide what to do
-        #     supply_delta = production_delta * 4
-        #     
-        #     # make opposing production modifications for this material
-        #     # that means if we make one planet a producer, another must
-        #     # become a consumer.
-        # 
-        #     # We add a small bias to the positive side
-        #     # so that economy is slightly inflationary in general.
-        #     # EDIT: this has been remove for study purposes            
-        #     a.production[m] = a.production.get(m,0) + production_delta # +1 bias
-        #     b.production[m] = b.production.get(m,0) - production_delta
-        #     a.supply[m] = max(0, a.supply.get(m,0) + supply_delta)
-        #     b.supply[m] = max(0, b.supply.get(m,0) - supply_delta)
+            # We add a small bias to the positive side
+            # so that economy is slightly inflationary in general.
+            # EDIT: this has been remove for study purposes            
+            a.production[m] = a.production.get(m,0) + production_delta # +1 bias
+            b.production[m] = b.production.get(m,0) - production_delta
+            a.supply[m] = max(0, a.supply.get(m,0) + supply_delta)
+            b.supply[m] = max(0, b.supply.get(m,0) - supply_delta)
         
         # set prices -- start at 10cR per material
         # lets try to set this based on general supply/demand
@@ -102,20 +97,10 @@ class Market(object):
         # for p,m in itertools.product(self.world.planets, self.materials):
         #     self.production[m] = self.production.get(m,0) + p.production[m]
         #     self.supply[m] = self.supply.get(m,0) + p.supply[m]
+
+
         
-                
-    def update(self):        
-        """
-        This method is called every turns to adjust the market condtions, and is 
-        used as AI that determines when each planet will issue BUY or SELL 
-        contracts. 
-        
-        At the moment, for simulation reasons, we replace the players of the 
-        game with some extra code that allows planets to buy and sell directly
-        to one another.
-        """
-        # TODO 
-        # market price adjustment based on contracts and interplanet variables
+    def ai(self):
         
         # BUY AND SELL ----
         # To be replaced with players who do this for us 
@@ -173,6 +158,20 @@ class Market(object):
                 
         # --- END BUY AND SELL
             
+        
+    def update(self):        
+        """
+        This method is called every turns to adjust the market condtions, and is
+        used as AI that determines when each planet will issue BUY or SELL 
+        contracts. 
+        
+        At the moment, for simulation reasons, we replace the players of the 
+        game with some extra code that allows planets to buy and sell directly
+        to one another.
+        """
+        # TODO 
+        # market price adjustment based on contracts and interplanet variables
+
         # CONTRACT GENERATION
         # loop through every possible planet-material combination
         for p,m in itertools.product(self.world.planets, self.materials):
@@ -352,7 +351,8 @@ if __name__ == '__main__':
     tick = 0
     while True:
         tick += 1
-        print 'TURN %d' % tick        
+        print 'TURN %d' % tick
+        market.ai()
         market.update()
         market.output()
         command = raw_input('#')

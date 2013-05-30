@@ -12,6 +12,8 @@ verbs = {
 
 def parse(command, world=None, player=None):
     tokens = command.lower().split()
+    if not tokens:
+        return
     verb = tokens[0]
     
     if verbs.has_key(verb):

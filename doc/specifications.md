@@ -76,8 +76,7 @@ If you are located at a planet that has an open SELL contract for a good you des
     BUY medicine 0-1300 15
  
 ### Sell Goods ###
- 
- 
+  
 Usage: SELL MATERIAL QTYMIN-QTYMAX PRICEPERUNIT
  
 If you are located at a planet that has an open BUY contract for a good you possess, you may sell up to the maximum specified amount for the listed price, provided you have the available goods. If you issue an invalid SELL command (the particular good is not requested at this location, or you do not have enough supply, or you specify an invalid number) you lose your turn.

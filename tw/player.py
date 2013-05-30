@@ -31,28 +31,10 @@ class Player(object):
                 self._connection.send(data)
                 
     def __repr__(self):
-        return self.name
-
-    # COMMANDS
-    # Should these go here with the world context?
-    
-    def buy(self, world, contract, minimum, maxium, price):
-        print 'BUY', self, world, contract, minimum, maxium, price
-    
-    def sell(self, world, contract, minimum, maxium, price):
-        print 'SELL', self, world, contract, minimum, maxium, price
-    
-    def issue(self, world, type, resource, amount, price, contract=None):
-        pass
-
-    def cancel(self, world, contract):
-        pass
-
-    def modify(self, world, contract, price):
-        pass
-
-    def travel(self, world, destination):
-        pass
-    
-    def idle(self, world):
-        pass
+        r = (
+            self.name.ljust(12),
+            self.position.x,
+            self.position.y,
+            self.credits
+        )
+        return '%s %s %s %s' % r
